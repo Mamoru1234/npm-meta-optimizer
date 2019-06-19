@@ -6,9 +6,15 @@ const app = express();
 
 app.use(morgan('tiny'));
 
-app.use('/:moduleName', proxy('https://registry.npmjs.org', {
-  proxyReqPathResolver: function() {
+app.use((req, res, next) => {
+  console.log('Started: ', req.url);
+  next();
+});
 
+app.get('/:moduleName/', proxy('https://registry.npmjs.org', {
+  proxyReqPathResolver: function(req) {
+    console.log(req.params.moduleName);
+    return `/${req.params.moduleName}`;
   },
   userResDecorator: function(proxyRes, proxyResData) {
     console.log(proxyResData.toString());
@@ -18,7 +24,11 @@ app.use('/:moduleName', proxy('https://registry.npmjs.org', {
   },
 }));
 
-app.use(proxy('registry.npm.org'));
+app.use(proxy('https://registry.npm.org', {
+  userResDecorator: function(proxyRes, proxyResData) {
+    return proxyResData;
+  },
+}));
 
 app.listen(4578, (err) => {
   if (err) {
